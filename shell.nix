@@ -1,16 +1,56 @@
- let
-   pkgs = import <nixpkgs> {}; 
-   inherit (pkgs) stdenv;
-   src = ./.;
- in with pkgs; {
-   myProject = stdenv.mkDerivation {
-     name = "RnD";
-     version = "1";
-     buildInputs =  [
+let
+  jupyter = import (builtins.fetchGit {
+    url = https://github.com/tweag/jupyterWith;
+    rev = "";
+  }) {};
+
+  iPython = jupyter.kernels.iPythonWith {
+    name = "python";
+    packages = p: with p; [
+      numpy
+      pandas
+      matplotlib
+      scikitlearn
+      seaborn
+      scipy
+      future
+      ipywidgets
+      scikitimage
+      tzlocal
+      simplegeneric
+      pprintpp
+    ];
+  };
+
+  iR = jupyter.kernels.juniperWith {
+    name = "R";
+    packages = p: with p; [
+       mlbench
+       arules
+       tidyverse
+       ggplot2
+       dplyr
+    ];
+  };
+
+#  iHaskell = jupyter.kernels.iHaskellWith {
+#    name = "haskell";
+#    packages = p: with p; [ hvega formatting ];
+#  };
+
+  jupyterEnvironment =
+    jupyter.jupyterlabWith {
+      kernels = [ iPython iR];
+    };
+    pkgs = import <nixpkgs> {};
+in
+  pkgs.mkShell {
+    name = "RnD";
+    buildInputs = with pkgs; [
+       jupyterEnvironment
        python37
        python37Packages.pandas
        python37Packages.numpy
-       python37Packages.rpy2
        python37Packages.matplotlib
        #python37Packages.sqlite
        python37Packages.notebook
@@ -28,7 +68,8 @@
        R
        rPackages.mlbench
        rPackages.arules
+       rPackages.tidyverse
        python37Packages.pprintpp
     ];
-  };
-}
+    
+  }
